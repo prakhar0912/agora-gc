@@ -129,6 +129,7 @@ export const Video = ({ user }) => {
     return () => {
       stopVideo()
     }
+  // eslint-disable-next-line
   }, [])
 
   return (
