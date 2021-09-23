@@ -3,6 +3,7 @@ import { useState, useRef, createContext, useContext } from 'react'
 const UserContext = createContext()
 const StartContext = createContext()
 const ClientContext = createContext()
+const SpeakingContext = createContext()
 
 
 export const useUsers = () => {
@@ -19,6 +20,10 @@ export const useClient = () => {
     return useContext(ClientContext)
 }
 
+export const useSpeaking = () => {
+    return useContext(SpeakingContext)
+}
+
 
 export const GlobalProvider = ({ children }) => {
 
@@ -30,16 +35,20 @@ export const GlobalProvider = ({ children }) => {
         // For the local audio and video tracks.
         localAudioTrack: null,
         localVideoTrack: null,
+        checkSpeakingInterval: null
     });
+    const [speaking, setSpeaking] = useState(false)
 
 
     return (
-        <ClientContext.Provider value = {rtc}>
-            <UserContext.Provider value={[users, setUsers]}>
-                <StartContext.Provider value={[start, setStart]}>
-                    {children}
-                </StartContext.Provider>
-            </UserContext.Provider>
-        </ClientContext.Provider>
+        <SpeakingContext.Provider value={[speaking, setSpeaking]}>
+            <ClientContext.Provider value={rtc}>
+                <UserContext.Provider value={[users, setUsers]}>
+                    <StartContext.Provider value={[start, setStart]}>
+                        {children}
+                    </StartContext.Provider>
+                </UserContext.Provider>
+            </ClientContext.Provider>
+        </SpeakingContext.Provider>
     )
 }

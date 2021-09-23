@@ -46,15 +46,15 @@ body {
   left: 50%;
   transform: translateX(-50%);
   margin: 20px auto;
-  padding: 10px 50px;
+  padding: 10px 10px;
   display: grid;
-  grid-template-columns: repeat(3, 33%);
+  grid-template-columns: repeat(4, 25%);
   align-items: center;
   justify-items: center;
   background: rgba(0, 0, 0, 0.6);
   border-radius: 10px;
   z-index: 1;
-  width: 300px;
+  width: 400px;
   max-width: 60vw;
 }
 
@@ -64,6 +64,12 @@ body {
   cursor: pointer;
   background: red;
   color: white;
+}
+
+.controls > input{
+  padding: 11px 10px;
+  width: 60px;
+  border-radius: 5px;
 }
 
 .controls p.on{
