@@ -14,36 +14,61 @@ const Content = () => {
   const setUsers = useUsers()[1]
   const [start, setStart] = useStart()
   const rtc = useClient()
+
+  const [token, setToken] = useState(null)
+
   const options = {
     // Pass your app ID here.
-    appId: "",
+    appId: process.env.REACT_APP_AGORA_APP_ID,
     // Set the channel name.
-    channel: "default_channel_name",
-    // Pass a token if your project enables the App Certificate.
-    token: null,
+    channel: "Agora_Default_Channel",
+    uid: 0
   };
 
-  let init = async (name, appId) => {
+  let init = async (name) => {
     rtc.current.client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-    initClientEvents()
-    const uid = await rtc.current.client.join(appId, name, options.token, null);
-    // Create an audio track from the audio sampled by a microphone.
-    rtc.current.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-    // Create a video track from the video captured by a camera.
-    rtc.current.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-    //Adding a User to the Users State
-    setUsers((prevUsers) => {
-      return [...prevUsers, { uid: uid, audio: true, video: true, client: true, videoTrack: rtc.current.localVideoTrack }]
-    })
-    //Publishing your Streams
-    await rtc.current.client.publish([rtc.current.localAudioTrack, rtc.current.localVideoTrack]);
-    setStart(true)
+    initClientEvents();
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/access_token?channel=${name}&uid=${options.uid}`)
+      .then(function (response) {
+        response.json().then(async function (data) {
+          console.log(data.token);
+          setToken(data.token);
+          const uid = await rtc.current.client.join(options.appId, name, token, options.uid);
+          // Create an audio track from the audio sampled by a microphone.
+          rtc.current.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+          // Create a video track from the video captured by a camera.
+          rtc.current.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+          //Adding a User to the Users State
+          setUsers((prevUsers) => {
+            return [...prevUsers, { uid: uid, audio: true, video: true, client: true, videoTrack: rtc.current.localVideoTrack }]
+          })
+          //Publishing your Streams
+          await rtc.current.client.publish([rtc.current.localAudioTrack, rtc.current.localVideoTrack]);
+          setStart(true)
+        });
+      })
+      .catch(function (err) {
+        console.log('Fetch Error', err);
+      });
+
+    rtc.current.client.on("token-privilege-will-expire", async () => {
+      fetch(`${process.env.REACT_APP_BACKEND_URL}/access_token?channel=${name}&uid=${options.uid}`)
+        .then(function (response) {
+          response.json().then(async function (data) {
+            console.log(data.token);
+            setToken(data.token);
+            // After requesting a new token
+            await rtc.current.client.renewToken(data.token);
+          });
+        })
+        .catch(function (err) {
+          console.log('Fetch Error', err);
+        });
+    });
   }
 
-
-
-
   const initClientEvents = () => {
+
     rtc.current.client.on("user-published", async (user, mediaType) => {
       // New User Enters
       await rtc.current.client.subscribe(user, mediaType);
@@ -99,7 +124,6 @@ const Content = () => {
   )
 }
 
-
 const Videos = () => {
 
   const users = useUsers()[0]
@@ -129,7 +153,7 @@ export const Video = ({ user }) => {
     return () => {
       stopVideo()
     }
-  // eslint-disable-next-line
+    // eslint-disable-next-line
   }, [])
 
   return (
@@ -138,7 +162,6 @@ export const Video = ({ user }) => {
     </div>
   )
 }
-
 
 export const Controls = ({ user }) => {
 
@@ -189,16 +212,13 @@ export const Controls = ({ user }) => {
   )
 }
 
-
 const ChannelForm = ({ initFunc }) => {
 
   const [channelName, setChannelName] = useState('')
-  const [appId, setappId] = useState('')
   return (
     <form className='join'>
-      <input type="text" placeholder="Enter App Id" onChange={(e) => { setappId(e.target.value) }} />
       <input type="text" placeholder='Enter Channel Name' onChange={(e) => setChannelName(e.target.value)} />
-      <button onClick={(e) => { e.preventDefault(); initFunc(channelName, appId); }}>Join Call</button>
+      <button onClick={(e) => { e.preventDefault(); initFunc(channelName); }}>Join Call</button>
     </form>
   );
 
