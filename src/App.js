@@ -54,11 +54,11 @@ const Content = () => {
     rtc.current.client.on("token-privilege-will-expire", async () => {
       fetch(`${process.env.REACT_APP_BACKEND_URL}/access_token?channel=${name}&uid=${options.uid}`)
         .then(function (response) {
-          response.json().then(async function (data) {
+          response.json().then(function (data) {
             console.log(data.token);
             setToken(data.token);
             // After requesting a new token
-            await rtc.current.client.renewToken(data.token);
+            rtc.current.client.renewToken(data.token);
           });
         })
         .catch(function (err) {
